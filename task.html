@@ -40,6 +40,7 @@
 				}
 			}
 		});
+		//make TSquare
 		function drawBack(ctx,col1,col2,w,h){
 			// закрашиваем канвас градиентным фоном
 			ctx.save();
@@ -76,82 +77,51 @@
 			balls.push(item);
 		}
 		var directions = [];
-		direction.length = balls.length;
-		function moveBall(direction){
+		
+		function moveBall(){
 			//реализация движения шариков, находящихся в массиве balls
 			drawBack(ctx,'#202020','#aaa',canvas.width,canvas.height);
-			for (var i = 0; i < balls.length;i){
-				switch (direction){
-					case 'up':
+			for (var i = 0; i < balls.length; i++){
+				switch (directions[i]){
+					case 1:
 					{
 						balls[i].posX = balls[i].posX + (Math.random()*4-2);
 						balls[i].posY = balls[i].posY + (Math.random()*2-4);	
 					}
 					break;
-					case 'down':
+					case 2:
 					{
 						balls[i].posX = balls[i].posX + (Math.random()*4-2);
 						balls[i].posY = balls[i].posY - (Math.random()*2-4);	
 					}
 					break;
-					case 'left':
+					case 3:
 					{
 						balls[i].posX = balls[i].posX + (Math.random()*2-4);
 						balls[i].posY = balls[i].posY + (Math.random()*4-2);
 					}
 					break;
-					case 'right':
+					case 4:
 					{
 						balls[i].posX = balls[i].posX - (Math.random()*2-4);
 						balls[i].posY = balls[i].posY + (Math.random()*4-2);
 					}
-					break;	
-					case 'chaos':
-					{
-						switch (directions[i])
-						{
-							case 1:
-							{
-								balls[i].posX = balls[i].posX + (Math.random()*4-2);
-								balls[i].posY = balls[i].posY + (Math.random()*2-4);
-							}
-							break;
-							case 2:
-						    {
-						    	balls[i].posX = balls[i].posX + (Math.random()*4-2);
-								balls[i].posY = balls[i].posY - (Math.random()*2-4);	
-						    }
-						    break;
-						    case 3:
-						    {
-						    	balls[i].posX = balls[i].posX + (Math.random()*2-4);
-								balls[i].posY = balls[i].posY + (Math.random()*4-2);
-						    }
-						    break;
-						    case 4:
-						    {
-						    	balls[i].posX = balls[i].posX - (Math.random()*2-4);
-								balls[i].posY = balls[i].posY + (Math.random()*4-2);
-						    }
-						    break;	
-						}
-						if ((balls[i].posX - balls[i].rBall > canvas.width)||(balls[i].posX + balls[i].rBall < 0) ||(balls[i].posY + balls[i].rBall < 0) || (balls[i].posY - balls[i].rBall > canvas.height)) 
-						{
-							directions.splice(i,1);
-			    		}	
-					}
 					break;
-				}
+					}
+					
+					
 				
 				balls[i].draw(ctx);
 				if ((balls[i].posX - balls[i].rBall > canvas.width) || (balls[i].posX + balls[i].rBall < 0) || (balls[i].posY + balls[i].rBall < 0) || (balls[i].posY - balls[i].rBall > canvas.height)) 
 				{
-					balls.splice(i,1);
-			    }	
-				else 
-					i++;
+					balls.splice(i, 1);
+					directions.splice(i, 1);
+			    }
+
+		
 			}
 		}
+		
 		function moveup()
 		{
 			moveBall('up');
@@ -175,30 +145,48 @@
 		}
 		function move(direction)
 		{
+
+			directions.length = balls.length;
 			switch (direction)
 			{
 				case 'up':
 				{
 					clearInterval(idTimer);
-					idTimer = setInterval('moveup();', 50);
+					for (var i = 0; i < directions.length; i++)
+					{
+						directions[i] = 1;
+					}
+					
 				}
 				break;
 				case 'down':
 				{
 					clearInterval(idTimer);
-					idTimer = setInterval('movedown();', 50);	
+					for (var i = 0; i < directions.length; i++)
+					{
+						directions[i] = 2;
+					}
+				
 				}
 				break;
 				case 'left':
 				{
 					clearInterval(idTimer);
-					idTimer = setInterval('moveleft();', 50);
+					for (var i = 0; i < directions.length; i++)
+					{
+						directions[i] = 3;
+					}
+				
 				}
 				break;
 				case 'right':
 				{
 					clearInterval(idTimer);
-					idTimer = setInterval('moveright();', 50);
+					for (var i = 0; i < directions.length; i++)
+					{
+						directions[i] = 4;
+					}
+				
 				}
 				break;
 				case 'random':
@@ -207,35 +195,11 @@
 					var max = 4;
 					var min = 1;
 					var dir = Math.floor(Math.random() * (max - min + 1)) + min;
-					switch (dir)
+					for (var i = 0; i < directions.length; i++)
 					{
-						case 1:
-						{
-							clearInterval(idTimer);
-							idTimer = setInterval('moveup();', 50);
-						}
-						break;
-						case 2:
-						{
-							clearInterval(idTimer);
-							idTimer = setInterval('movedown();', 50);
-						}
-						break;
-						case 3:
-						{
-							clearInterval(idTimer);
-							idTimer = setInterval('moveleft();', 50);
-						}
-						break;
-						case 4:
-						{
-							clearInterval(idTimer);
-							idTimer = setInterval('moveright();', 50);
-						}
-						break;
+						directions[i] = dir;
 					}
 					
-				  
 				}
 				break;
 				case 'chaos':
@@ -248,12 +212,30 @@
 					{
 						directions[i] = Math.floor(Math.random() * (max - min + 1)) + min;
 					}
-					idTimer = setInterval('movechaos();', 50);				
+							
 				}
 
 			}
+			idTimer = setInterval('moveBall();', 50);
 		}
+	function grow()
+	{
 
+		for (var i = 0; i < balls.length; i++)
+		{
+			balls[i].rBall += 0.1;
+			if (balls[i].rBall >= 100) 
+			{
+				balls.splice(i, 1);
+				directions.splice(i, 1);	
+			}
+			balls[i].draw(ctx);
+		}
+	}	
+	function growradius()
+	{
+		radTimer = setInterval('grow();', 50)
+	}
 	</script>
 	<style type="text/css">
 		canvas { border: 1px solid blue; }
@@ -270,6 +252,7 @@
 		<input type = "button" value = "Рандом" onclick="move('random')">
 		<input type = "button" value = "Хаос" onclick="move('chaos')">
 		<input type = "button" value = "Стоп" onclick="clearInterval(idTimer);">
+	    <input type = "button" value = "Увеличение радиуса" onclick="growradius()">
 	</form>
 </body>
 </html>
