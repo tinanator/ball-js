@@ -4,20 +4,59 @@
 	<title>Canvas & Mootools</title>
 	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mootools/1.6.0/mootools-core.js"></script>
 	<script type="text/javascript">
-		var canvas, ctx, balls, idTimer;
-		TBall = new Class({
-			initialize: function(pX,pY) {
+		var canvas, ctx,  r_n, d_n;
+		var idTimer = 0;
+		r_n = 0;
+		d_n = 0;
+		figures = [];
+		TFigure = new Class({
+
+			initialize: function(pX,pY){
 				this.posX = pX; //позиция шарика по X
 				this.posY = pY; //позиция шарика по Y
 				//цвет шарика, формируется случайным оьразом
-				this.colBall = 'rgb('+Math.floor(Math.random()*256)+','
+				this.color = 'rgb('+Math.floor(Math.random()*256)+','
+				+Math.floor(Math.random()*256)+','+Math.floor(Math.random()*256)+')';
+				// радиус шарика, случайное число от 5 до 30
+				this.vX = 0;
+				this.vY = 0;
+				this.direct = 0;
+				},	
+				posX: 0,
+				posY: 0,
+				direct: 0,	
+				vX: 0,
+				vY: 0,
+				move: function(vX, vY){
+					this.posX += vX;
+					this.posY += vY;
+				},
+				
+				draw : function(ctx){
+					
+					
+				},
+				grow: function()
+				{
+
+				},
+				isToDelete: function()
+				{
+					return false;
+				}
+
+
+		});
+		TBall = new Class({
+			Extends: TFigure,
+			initialize: function(pX,pY) {
+				this.parent(pX, pY); //позиция шарика по X
+				this.color = 'rgb('+Math.floor(Math.random()*256)+','
 				+Math.floor(Math.random()*256)+','+Math.floor(Math.random()*256)+')';
 				// радиус шарика, случайное число от 5 до 30
 				this.rBall = 5+Math.random()*25;
 			},
-			posX: 0,
-			posY: 0,
-			colBall:"rgb(0,0,0)",
+			color:"rgb(0,0,0)",
 			rBall: 0,
 			colorBall: function(ctx){
 				// формируем градиентную заливку для шарика
@@ -25,9 +64,21 @@
 					var gradient = ctx.createRadialGradient(posX+rBall/4,
 					posY-rBall/6, rBall/8, posX, posY, rBall);
 					gradient.addColorStop(0, '#fff');
-					gradient.addColorStop(0.85, colBall);
+					gradient.addColorStop(0.85, color);
 					return gradient;
 				}
+			},
+			isToDelete: function()
+			{
+				if ((this.posX - this.rBall > canvas.width) || (this.posX + this.rBall < 0) || (this.posY + this.rBall < 0) || (this.posY - this.rBall > canvas.height)) 
+				{
+					return true;	
+				}
+				if (this.rBall >= 100)
+				{
+					return true;
+				}
+				return false;
 			},
 			draw : function(ctx){
 				// рисуем шарик на canvas
@@ -38,9 +89,58 @@
 					ctx.closePath();
 					ctx.fill();
 				}
+			},
+			grow: function(){
+				with(this){
+					rBall += r_n;
+
+				}
 			}
 		});
-		//make TSquare
+		TSquare = new Class({
+			Extends: TFigure,
+			initialize: function(pX,pY) {
+				this.parent(pX, pY); //позиция шарика по X
+				this.color = 'rgb('+Math.floor(Math.random()*256)+','
+				+Math.floor(Math.random()*256)+','+Math.floor(Math.random()*256)+')';
+				
+				this.size = 5+Math.random()*25;
+			},
+			color:"rgb(0,0,0)",
+			size: 0,
+			
+			isToDelete: function()
+			{
+				if ((this.posX - this.size > canvas.width) || (this.posX < 0) || (this.posY < 0) || (this.posY - this.size > canvas.height)) 
+				{
+					return true;	
+				}
+				if (this.size >= 100)
+				{
+					return true;
+				}
+				return false;
+			},
+			draw : function(ctx){
+				// рисуем шарик на canvas
+				with (this){
+					ctx.fillStyle = color;
+					ctx.beginPath();
+					ctx.fillRect(posX, posY, size, size);
+					ctx.closePath();
+					ctx.fill();
+				}
+			},
+			grow: function(){
+				with(this){
+					size += r_n;
+
+				}
+			}
+
+		});
+		
+		
 		function drawBack(ctx,col1,col2,w,h){
 			// закрашиваем канвас градиентным фоном
 			ctx.save();
@@ -59,182 +159,204 @@
 				//рисуем фон
 				drawBack(ctx,'#202020','#aaa',canvas.width,canvas.height);
 				//создаем 10 шариков, заноси их в массив и выводим на canvas
-				balls = [];
+				
 				for (var i = 1; i<=10;i++){
 					var item = new TBall(10+Math.random()*(canvas.width-30),
 					10+Math.random()*(canvas.height-30));
 					item.draw(ctx);
-					balls.push(item);
+					figures.push(item);
 				}
 			}
+		}
+		function randInt(min, max)
+		{
+			return Math.floor(Math.random()* (max - min + 1)) + min;
 		}
 		// создаем новый шарик по щелчку мыши, добавляем его в массив шариков и рисуем его
 		function goInput(event){
 			var x = event.clientX;
 			var y = event.clientY;
-			var item = new TBall(x,y);
+			var max = 2;
+			var min = 1;
+			fig = randInt(1, 2);
+			if (fig == 1)
+			{
+				var item = new TBall(x,y);
+			}
+			else if (fig == 2)
+			{
+				var item = new TSquare(x,y);
+			}
+			if (d_n == 5)
+			{
+				item.direct = randInt(1, 4);
+			}
+			else
+			{
+				item.direct = d_n;
+			}
 			item.draw(ctx);
-			balls.push(item);
+			figures.push(item);
 		}
-		var directions = [];
 		
 		function moveBall(){
-			//реализация движения шариков, находящихся в массиве balls
+			//реализация движения шариков, находящихся в массиве figures
 			drawBack(ctx,'#202020','#aaa',canvas.width,canvas.height);
-			for (var i = 0; i < balls.length; i++){
-				switch (directions[i]){
+			for (var i = 0; i < figures.length; i++){
+				let f = figures[i];
+				switch (figures[i].direct){
 					case 1:
-					{
-						balls[i].posX = balls[i].posX + (Math.random()*4-2);
-						balls[i].posY = balls[i].posY + (Math.random()*2-4);	
+					{                                                                                                                 
+						f.move(Math.random()*4-2, Math.random()*2-4);	
 					}
 					break;
 					case 2:
 					{
-						balls[i].posX = balls[i].posX + (Math.random()*4-2);
-						balls[i].posY = balls[i].posY - (Math.random()*2-4);	
+						f.move(Math.random()*4-2, -(Math.random()*2-4));
 					}
 					break;
 					case 3:
 					{
-						balls[i].posX = balls[i].posX + (Math.random()*2-4);
-						balls[i].posY = balls[i].posY + (Math.random()*4-2);
+						f.move(Math.random()*2-4, Math.random()*4-2);
 					}
 					break;
 					case 4:
 					{
-						balls[i].posX = balls[i].posX - (Math.random()*2-4);
-						balls[i].posY = balls[i].posY + (Math.random()*4-2);
+						f.move(-(Math.random()*2-4), Math.random()*4-2);
 					}
 					break;
-					}
-					
-					
+				}	
+				f.grow();
+
+ 				f.draw(ctx);
+ 				
 				
-				balls[i].draw(ctx);
-				if ((balls[i].posX - balls[i].rBall > canvas.width) || (balls[i].posX + balls[i].rBall < 0) || (balls[i].posY + balls[i].rBall < 0) || (balls[i].posY - balls[i].rBall > canvas.height)) 
-				{
-					balls.splice(i, 1);
-					directions.splice(i, 1);
-			    }
-
-		
 			}
-		}
-		
-		function moveup()
-		{
-			moveBall('up');
-		}
-		function movedown()
-		{
-			moveBall('down');
-		}
-		function moveleft()
-		{
-			moveBall('left');
-		}
-		function moveright()
-		{
-			moveBall('right');
-		}
-		function movechaos()
-		{
+			for (let i = figures.length - 1; i >= 0; i++)
+			{
+				if (figures[i].isToDelete()) 
+ 				{
+ 					figures.splice(i, 1);
+ 				}
+			}
 
-			moveBall('chaos');
 		}
+
+			
+		 	
+			
+		
+
 		function move(direction)
 		{
 
-			directions.length = balls.length;
 			switch (direction)
 			{
+
+				
 				case 'up':
 				{
-					clearInterval(idTimer);
-					for (var i = 0; i < directions.length; i++)
+					for (var i = 0; i < figures.length; i++)
 					{
-						directions[i] = 1;
+						figures[i].direct = 1;
 					}
-					
+					d_n = 1;
+				
 				}
 				break;
 				case 'down':
 				{
-					clearInterval(idTimer);
-					for (var i = 0; i < directions.length; i++)
+					for (var i = 0; i < figures.length; i++)
 					{
-						directions[i] = 2;
+						figures[i].direct = 2;
 					}
+					d_n = 2;
 				
 				}
 				break;
 				case 'left':
 				{
-					clearInterval(idTimer);
-					for (var i = 0; i < directions.length; i++)
+					for (var i = 0; i < figures.length; i++)
 					{
-						directions[i] = 3;
+						figures[i].direct = 3;
 					}
+					d_n = 3;
 				
 				}
 				break;
 				case 'right':
 				{
-					clearInterval(idTimer);
-					for (var i = 0; i < directions.length; i++)
+					for (var i = 0; i < figures.length; i++)
 					{
-						directions[i] = 4;
+						figures[i].direct = 4;
 					}
-				
+					d_n = 4;
+					
 				}
 				break;
 				case 'random':
 				{
-					clearInterval(idTimer);
-					var max = 4;
-					var min = 1;
-					var dir = Math.floor(Math.random() * (max - min + 1)) + min;
-					for (var i = 0; i < directions.length; i++)
+					var dir = randInt(1, 4);
+					for (var i = 0; i < figures.length; i++)
 					{
-						directions[i] = dir;
+						figures[i].direct = dir;
 					}
+					d_n = dir;
 					
 				}
 				break;
 				case 'chaos':
-				{
-					clearInterval(idTimer);
-					var min = 1;
+				{	
 					var max = 4;
-					directions.length = balls.length;
-					for (var i = 0; i < directions.length; i++)
+					var min = 1;
+					for (var i = 0; i < figures.length; i++)
 					{
-						directions[i] = Math.floor(Math.random() * (max - min + 1)) + min;
+						figures[i].direct = Math.floor(Math.random() * (max - min + 1)) + min;
 					}
-							
+					d_n = 5;
+					
 				}
 
 			}
-			idTimer = setInterval('moveBall();', 50);
+			if (idTimer == 0)
+			{
+				idTimer = setInterval('moveBall();', 50);
+			}
+			
 		}
 	function grow()
 	{
 
-		for (var i = 0; i < balls.length; i++)
+		for (var i = figures.length; i < figures.length; i++)
 		{
-			balls[i].rBall += 0.1;
-			if (balls[i].rBall >= 100) 
+			figures[i].rBall += 0.5;
+			if (figures[i].rBall >= 100) 
 			{
-				balls.splice(i, 1);
+				figures.splice(i, 1);
 				directions.splice(i, 1);	
 			}
-			balls[i].draw(ctx);
+			figures[i].draw(ctx);
 		}
 	}	
 	function growradius()
 	{
-		radTimer = setInterval('grow();', 50)
+		r_n = 0.5;
+		if (idTimer == 0)
+		{
+			idTimer = setInterval('moveBall();', 50);	
+		}
+		
+	}
+	function stop()
+	{
+		clearInterval(idTimer);
+		idTimer = 0;
+		r_n = 0;
+		d_n = 0;
+		for (let i = 0; i < figures.length; i++)
+		{
+			figures[i].direct = 0; 
+		}
 	}
 	</script>
 	<style type="text/css">
@@ -251,7 +373,7 @@
 		<input type = "button" value = "Вправо" onclick="move('right')">
 		<input type = "button" value = "Рандом" onclick="move('random')">
 		<input type = "button" value = "Хаос" onclick="move('chaos')">
-		<input type = "button" value = "Стоп" onclick="clearInterval(idTimer);">
+		<input type = "button" value = "Стоп" onclick="stop()">
 	    <input type = "button" value = "Увеличение радиуса" onclick="growradius()">
 	</form>
 </body>
