@@ -204,7 +204,11 @@
 			drawBack(ctx,'#202020','#aaa',canvas.width,canvas.height);
 			for (var i = 0; i < figures.length; i++){
 				let f = figures[i];
-				switch (figures[i].direct){
+				if (d_n == 6)
+				{
+					f.direct = randInt(1, 4);
+				}
+				switch (f.direct){
 					case 1:
 					{                                                                                                                 
 						f.move(Math.random()*4-2, Math.random()*2-4);	
@@ -225,7 +229,9 @@
 						f.move(-(Math.random()*2-4), Math.random()*4-2);
 					}
 					break;
-				}	
+
+				}
+
 				f.grow();
 
  				f.draw(ctx);
@@ -296,24 +302,23 @@
 				break;
 				case 'random':
 				{
-					var dir = randInt(1, 4);
+					
 					for (var i = 0; i < figures.length; i++)
 					{
-						figures[i].direct = dir;
+						figures[i].direct = randInt(1, 4);
 					}
-					d_n = dir;
+					d_n = 5;
 					
 				}
 				break;
 				case 'chaos':
 				{	
-					var max = 4;
-					var min = 1;
+					
 					for (var i = 0; i < figures.length; i++)
 					{
-						figures[i].direct = Math.floor(Math.random() * (max - min + 1)) + min;
+						figures[i].direct = randInt(1, 4);;
 					}
-					d_n = 5;
+					d_n = 6;
 					
 				}
 
