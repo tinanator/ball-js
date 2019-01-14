@@ -27,13 +27,14 @@
 				direct: 0,	
 				vX: 0,
 				vY: 0,
+				
 				move: function(vX, vY){
 					this.posX += vX;
 					this.posY += vY;
 				},
 				
-				draw : function(ctx){
-					
+				draw : function(ctx)
+				{
 					
 				},
 				grow: function()
@@ -44,8 +45,6 @@
 				{
 					return false;
 				}
-
-
 		});
 		TBall = new Class({
 			Extends: TFigure,
@@ -143,34 +142,38 @@
 			Extends: TFigure,
 			initialize: function(pX, pY)
 			{
-				this.parent(pX, pY); //позиция шарика по X
+				this.parent(pX, pY); 
 				this.color = 'rgb('+Math.floor(Math.random()*256)+','
 				+Math.floor(Math.random()*256)+','+Math.floor(Math.random()*256)+')';
 				
-				this.size = 5+Math.random()*25;
+				this.size = 5+Math.random()*60;
 			},
 			color:"rgb(0,0,0)",
 			size: 0,
 
 			isToDelete: function()
 			{
-				if ((this.posX  > canvas.width) || (this.posX + this.size< 0) || (this.posY < 0) || (this.posY + ((Math.sqrt(3)/2)*this.size > canvas.height)))
+				if (
+					(this.posX  > canvas.width) 
+					|| (this.posX + this.size < 0) 
+					|| (this.posY < 0) 
+					|| ((this.posY - Math.sqrt(3) * this.size /2) > canvas.height))
 				{
 					return true;	
 				}
-				if (this.size >= 100)
+				if (this.size >= 400)
 				{
 					return true;
 				}
 				return false;
 			},
 			draw : function(ctx){
-				// рисуем шарик на canvas
+				
 				with (this){
 					ctx.fillStyle = color;
 					ctx.beginPath();
-				    ctx.moveTo(posX,posY);
-				    ctx.lineTo(posX + (size / 2), posY - ((3 * size*size)/4));
+					ctx.moveTo(posX, posY);
+				    ctx.lineTo(posX + (size / 2), posY - (Math.sqrt((3*size*size)/4)));
 				    ctx.lineTo(posX + size, posY);
 				    ctx.fill();
 				}
@@ -182,7 +185,7 @@
 				}
 			}
 
-		})
+		});
 		
 		
 		function drawBack(ctx,col1,col2,w,h){
@@ -277,9 +280,7 @@
 					break;
 
 				}
-
 				f.grow();
-
  				f.draw(ctx);
  				
 				
