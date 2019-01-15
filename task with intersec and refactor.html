@@ -1,0 +1,585 @@
+<html>
+<head>
+	<meta charset="utf-8">
+	<title>Canvas & Mootools</title>
+	<script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/mootools/1.6.0/mootools-core.js"></script>
+	<script type="text/javascript">
+		var canvas, ctx,  r_n, d_n;
+		var idTimer = 0;
+		r_n = 0;
+		d_n = 0;
+		figures = [];
+		TFigure = new Class({
+
+			initialize: function(pX,pY){
+				this.posX = pX; //позиция шарика по X
+				this.posY = pY; //позиция шарика по Y
+				//цвет шарика, формируется случайным оьразом
+				this.color = 'rgb('+Math.floor(Math.random()*256)+','
+				+Math.floor(Math.random()*256)+','+Math.floor(Math.random()*256)+')';
+				// радиус шарика, случайное число от 5 до 30
+				this.vX = 0;
+				this.vY = 0;
+				this.direct = 0;
+				},	
+				posX: 0,
+				posY: 0,
+				direct: 0,	
+				vX: 0,
+				vY: 0,
+				shape: function()
+				{
+					return 'Figure';
+				},
+				isIntersec: function()
+				{
+					return false;
+				},
+				move: function(vX, vY){
+					this.posX += vX;
+					this.posY += vY;
+				},
+				
+				draw : function(ctx)
+				{
+					
+				},
+				grow: function()
+				{
+
+				},
+				isToDelete: function()
+				{
+					return false;
+				}
+		});
+		TBall = new Class({
+			Extends: TFigure,
+			initialize: function(pX,pY) {
+				this.parent(pX, pY); //позиция шарика по X
+				this.color = 'rgb('+Math.floor(Math.random()*256)+','
+				+Math.floor(Math.random()*256)+','+Math.floor(Math.random()*256)+')';
+				// радиус шарика, случайное число от 5 до 30
+				this.rBall = 5+Math.random()*25;
+			},
+			color:"rgb(0,0,0)",
+			rBall: 0,
+			isIntersec: function(item)
+			{
+				if (item.shape() == 'Ball')
+				{
+					if (
+						this.rBall + item.rBall >= Math.sqrt(
+						(this.posX - item.posX)*(this.posX - item.posX)+(this.posY - item.posY)*(this.posY - item.posY)
+						)
+						)
+					{
+						return true;
+					}
+				}
+				else if (item.shape() == 'Square')
+				{
+					let x_c = (item.posX + item.posX + item.size)/2;
+					let y_c = (item.posY + item.posY - item.size)/2;
+					let len = Math.sqrt((x_c - item.posX)*(x_c - item.posX)+(y_c - item.posY)*(y_c - item.posY));
+					if (this.rBall + len >= Math.sqrt((this.posX - x_c)*(this.posX - x_c)+(this.posY - y_c)*(this.posY - y_c)))
+					{
+						return true;
+					}
+
+
+				}
+				else if (item.shape() == 'Triangle')
+				{
+					let x_c = (item.posX + item.posX + (item.size / 2) + item.posX + item.size) / 3;
+					let y_c = (item.posY + item.posY - (Math.sqrt((3*item.size*item.size)/4)) + item.posY) / 3; 
+					let len = Math.sqrt((x_c - item.posX)*(x_c - item.posX)+(y_c - item.posY)*(y_c - item.posY));
+					if (this.rBall + len >= Math.sqrt((this.posX - x_c)*(this.posX - x_c)+(this.posY - y_c)*(this.posY - y_c)))
+					{
+						return true;
+					}
+				}
+				return false;
+
+			},
+			shape: function()
+			{
+				return 'Ball';
+			},
+			colorBall: function(ctx){
+				// формируем градиентную заливку для шарика
+				with (this){
+					var gradient = ctx.createRadialGradient(posX+rBall/4,
+					posY-rBall/6, rBall/8, posX, posY, rBall);
+					gradient.addColorStop(0, '#fff');
+					gradient.addColorStop(0.85, color);
+					return gradient;
+				}
+			},
+			isToDelete: function()
+			{
+				if ((this.posX - this.rBall > canvas.width) || (this.posX + this.rBall < 0) || (this.posY + this.rBall < 0) || (this.posY - this.rBall > canvas.height)) 
+				{
+					return true;	
+				}
+				if (this.rBall >= 100)
+				{
+					return true;
+				}
+				return false;
+			},
+			draw : function(ctx){
+				// рисуем шарик на canvas
+				with (this){
+					ctx.fillStyle = colorBall(ctx);
+					ctx.beginPath();
+					ctx.arc(posX, posY, rBall, 0, 2*Math.PI, false);
+					ctx.closePath();
+					ctx.fill();
+				}
+			},
+			grow: function(){
+				with(this){
+					rBall += r_n;
+
+				}
+			}
+		});
+		TSquare = new Class({
+			Extends: TFigure,
+			initialize: function(pX,pY) {
+				this.parent(pX, pY); //позиция шарика по X
+				this.color = 'rgb('+Math.floor(Math.random()*256)+','
+				+Math.floor(Math.random()*256)+','+Math.floor(Math.random()*256)+')';
+				
+				this.size = 5+Math.random()*25;
+			},
+			color:"rgb(0,0,0)",
+			size: 0,
+			shape: function()
+			{
+				return 'Square';
+			},
+			isIntersec: function(item)
+			{
+				if (item.shape() == 'Square')
+				{
+					let x_c1 = (this.posX + this.posX + this.size)/2;
+					let y_c1 = (this.posY + this.posY - this.size)/2;
+					let x_c2 = (item.posX + item.posX + item.size)/2;
+					let y_c2 = (item.posY + item.posY - item.size)/2;
+					let len1 = Math.sqrt((x_c1 - this.posX)*(x_c1 - this.posX)+(y_c1 - this.posY)*(y_c1 - this.posY));
+					let len2 = Math.sqrt((x_c2 - item.posX)*(x_c2 - item.posX)+(y_c2 - item.posY)*(y_c2 - item.posY));
+					if (len1 + len2 >= Math.sqrt((x_c1 - x_c2)*(x_c1 - x_c2)+(y_c1 - y_c2)*(y_c1 - y_c2)))
+					{
+						return true;
+					}
+				}
+				else if (item.shape() == 'Ball')
+				{
+					let x_c = (this.posX + this.posX + this.size)/2;
+					let y_c = (this.posY + this.posY - this.size)/2;
+					let len = Math.sqrt((x_c - this.posX)*(x_c - this.posX)+(y_c - this.posY)*(y_c - this.posY));
+					if (item.rBall + len >= Math.sqrt((item.posX - x_c)*(item.posX - x_c)+(item.posY - y_c)*(item.posY - y_c)))
+					{
+						return true;
+					}
+
+
+				}
+				else if (item.shape() == 'Triangle')
+				{
+					let x_c2 = (item.posX + item.posX + (item.size / 2) + item.posX + item.size) / 3;
+					let y_c2 = (item.posY + item.posY - (Math.sqrt((3*item.size*item.size)/4)) + item.posY) / 3; 
+					let x_c1 = (this.posX + this.posX + this.size)/2;
+					let y_c1 = (this.posY + this.posY - this.size)/2;
+					let len1 = Math.sqrt((x_c1 - this.posX)*(x_c1 - this.posX)+(y_c1 - this.posY)*(y_c1 - this.posY));
+					let len2 = Math.sqrt((x_c2 - item.posX)*(x_c2 - item.posX)+(y_c2 - item.posY)*(y_c2 - item.posY));
+ 					if (len1 + len2 >= Math.sqrt((x_c1 - x_c2)*(x_c1 - x_c2)+(y_c1 - y_c2)*(y_c1 - y_c2)))
+					{
+						return true;
+					
+					}
+				}
+				return false;
+
+			
+		},
+			isToDelete: function()
+			{
+				if ((this.posX - this.size > canvas.width) || (this.posX < 0) || (this.posY < 0) || (this.posY - this.size > canvas.height)) 
+				{
+					return true;	
+				}
+				if (this.size >= 100)
+				{
+					return true;
+				}
+				return false;
+			},
+			draw : function(ctx){
+				// рисуем шарик на canvas
+				with (this){
+					ctx.fillStyle = color;
+					ctx.beginPath();
+					ctx.fillRect(posX, posY, size, size);
+					ctx.closePath();
+					ctx.fill();
+				}
+			},
+			grow: function(){
+				with(this){
+					size += r_n;
+
+				}
+			}
+
+		});
+		TTriangle = new Class({
+			Extends: TFigure,
+			initialize: function(pX, pY)
+			{
+				this.parent(pX, pY); 
+				this.color = 'rgb('+Math.floor(Math.random()*256)+','
+				+Math.floor(Math.random()*256)+','+Math.floor(Math.random()*256)+')';
+				
+				this.size = 5+Math.random()*60;
+			},
+			color:"rgb(0,0,0)",
+			size: 0,
+			shape: function()
+			{
+				return 'Triangle';
+			},
+			isIntersec: function(item)
+			{
+				if (item.shape() == 'Square')
+				{
+					let x_cS = (item.posX + item.posX + item.size)/2;
+					let y_cS = (item.posY + item.posY - item.size)/2;
+					
+					let x_cT = (this.posX + this.posX + (this.size / 2) + this.posX + this.size) / 3;
+					let y_cT = (this.posY + this.posY - (Math.sqrt((3*this.size*this.size)/4)) + this.posY) / 3; 
+					let lenS = Math.sqrt((x_cS - item.posX)*(x_cS - item.posX)+(y_cS - item.posY)*(y_cS - item.posY));
+					let lenT = Math.sqrt((x_cT - this.posX)*(x_cT - this.posX)+(y_cT - this.posY)*(y_cT - this.posY));
+ 					if (lenS + lenT >= Math.sqrt((x_cS - x_cT)*(x_cS - x_cT)+(y_cS - y_cT)*(y_cS - y_cT)))
+					{
+						return true;
+					
+					}
+				}
+				else if (item.shape() == 'Ball')
+				{
+					let x_c = (this.posX + this.posX + (this.size / 2) + this.posX + this.size) / 3;
+					let y_c = (this.posY + this.posY - (Math.sqrt((3*this.size*this.size)/4)) + this.posY) / 3; 
+					let len = Math.sqrt((x_c - this.posX)*(x_c - this.posX)+(y_c - this.posY)*(y_c - this.posY));
+					if (item.rBall + len >= Math.sqrt((item.posX - x_c)*(item.posX - x_c)+(item.posY - y_c)*(item.posY - y_c)))
+					{
+						return true;
+					}
+
+
+				}
+				else if (item.shape() == 'Triangle')
+				{
+					let x_c1 = (this.posX + this.posX + (this.size / 2) + this.posX + this.size) / 3;
+					let y_c1 = (this.posY + this.posY - (Math.sqrt((3*this.size*this.size)/4)) + this.posY) / 3; 
+					let x_c2 = (item.posX + item.posX + (item.size / 2) + item.posX + item.size) / 3;
+					let y_c2 = (item.posY + item.posY - (Math.sqrt((3*item.size*item.size)/4)) + item.posY) / 3; 
+					let len1 = Math.sqrt((x_c1 - this.posX)*(x_c1 - this.posX)+(y_c1 - this.posY)*(y_c1 - this.posY));
+					let len2 = Math.sqrt((x_c2 - item.posX)*(x_c2 - item.posX)+(y_c2 - item.posY)*(y_c2 - item.posY));
+ 					if (len1 + len2 >= Math.sqrt((x_c1 - x_c2)*(x_c1 - x_c2)+(y_c1 - y_c2)*(y_c1 - y_c2)))
+					{
+						return true;
+					
+					}
+				
+
+				}
+				return false;
+			},
+			isToDelete: function()
+			{
+				if (
+					(this.posX  > canvas.width) 
+					|| (this.posX + this.size < 0) 
+					|| (this.posY < 0) 
+					|| ((this.posY - Math.sqrt(3) * this.size /2) > canvas.height))
+				{
+					return true;	
+				}
+				if (this.size >= 400)
+				{
+					return true;
+				}
+				return false;
+			},
+			draw : function(ctx){
+				
+				with (this){
+					ctx.fillStyle = color;
+					ctx.beginPath();
+					ctx.moveTo(posX, posY);
+				    ctx.lineTo(posX + (size / 2), posY - (Math.sqrt((3*size*size)/4)));
+				    ctx.lineTo(posX + size, posY);
+				    ctx.fill();
+				}
+			},
+			grow: function(){
+				with(this){
+					size += r_n;
+
+				}
+			}
+
+		});
+		
+		
+		function drawBack(ctx,col1,col2,w,h){
+			// закрашиваем канвас градиентным фоном
+			ctx.save();
+			var g = ctx.createLinearGradient(0,0,0,h);
+			g.addColorStop(1,col1);
+			g.addColorStop(0,col2);
+			ctx.fillStyle = g;
+			ctx.fillRect(0,0,w,h);
+			ctx.restore();
+		}
+		// инициализация работы
+		function init(){
+			canvas = document.getElementById('canvas');
+			if (canvas.getContext){
+				ctx = canvas.getContext('2d');
+				//рисуем фон
+				drawBack(ctx,'#202020','#aaa',canvas.width,canvas.height);
+				//создаем 10 шариков, заноси их в массив и выводим на canvas
+				
+				for (var i = 1; i<=10;i++){
+					var item = new TBall(10+Math.random()*(canvas.width-30),
+					10+Math.random()*(canvas.height-30));
+					item.draw(ctx);
+					figures.push(item);
+				}
+			}
+		}
+		function randInt(min, max)
+		{
+			return Math.floor(Math.random()* (max - min + 1)) + min;
+		}
+		// создаем новый шарик по щелчку мыши, добавляем его в массив шариков и рисуем его
+		function goInput(event){
+			var x = event.clientX;
+			var y = event.clientY;
+			fig = randInt(1, 3);
+			if (fig == 1)
+			{
+				var item = new TBall(x,y);
+			}
+			else if (fig == 2)
+			{
+				var item = new TSquare(x,y);
+			}
+			else
+			{
+				var item = new TTriangle(x, y);
+			}
+			if (d_n == 5)
+			{
+				item.direct = randInt(1, 4);
+			}
+			else
+			{
+				item.direct = d_n;
+			}
+			item.draw(ctx);
+			figures.push(item);
+		}
+		
+		function moveBall(){
+			
+			drawBack(ctx,'#202020','#aaa',canvas.width,canvas.height);
+			for (let i = 0; i < figures.length; i++){
+				let f = figures[i];
+				if (d_n == 6)
+				{
+					f.direct = randInt(1, 4);
+				}
+				switch (f.direct){
+					case 1:
+					{                                                                                                                 
+						f.move(Math.random()*4-2, Math.random()*2-4);	
+					}
+					break;
+					case 2:
+					{
+						f.move(Math.random()*4-2, -(Math.random()*2-4));
+					}
+					break;
+					case 3:
+					{
+						f.move(Math.random()*2-4, Math.random()*4-2);
+					}
+					break;
+					case 4:
+					{
+						f.move(-(Math.random()*2-4), Math.random()*4-2);
+					}
+					break;
+
+				}
+				f.grow();
+ 				f.draw(ctx);
+ 				
+				
+			}
+			var toDel = [];
+			for (let i = figures.length - 1; i >= 0; i--)
+			{
+				for (let j = i - 1; j >=0; j--)
+				{
+					if (i != j)
+					{
+						var b = figures[i].isIntersec(figures[j]);
+						if (b)
+						{
+							toDel.push(i);
+							toDel.push(j);
+						}
+					}
+					
+				}
+			}
+			for (let i = figures.length - 1; i >= 0; i--)
+			{
+				if (figures[i].isToDelete() || toDel.indexOf(i) >= 0)
+				{
+ 					figures.splice(i, 1);
+ 					toDel.splice(i, 1);
+ 					
+				}
+			}
+			
+		}
+
+			
+		 	
+			
+		
+
+		function move(direction)
+		{
+
+			switch (direction)
+			{
+
+				
+				case 'up':
+				{
+					for (var i = 0; i < figures.length; i++)
+					{
+						figures[i].direct = 1;
+					}
+					d_n = 1;
+				
+				}
+				break;
+				case 'down':
+				{
+					for (var i = 0; i < figures.length; i++)
+					{
+						figures[i].direct = 2;
+					}
+					d_n = 2;
+				
+				}
+				break;
+				case 'left':
+				{
+					for (var i = 0; i < figures.length; i++)
+					{
+						figures[i].direct = 3;
+					}
+					d_n = 3;
+				
+				}
+				break;
+				case 'right':
+				{
+					for (var i = 0; i < figures.length; i++)
+					{
+						figures[i].direct = 4;
+					}
+					d_n = 4;
+					
+				}
+				break;
+				case 'random':
+				{
+					
+					for (var i = 0; i < figures.length; i++)
+					{
+						figures[i].direct = randInt(1, 4);
+					}
+					d_n = 5;
+					
+				}
+				break;
+				case 'chaos':
+				{	
+					
+					for (var i = 0; i < figures.length; i++)
+					{
+						figures[i].direct = randInt(1, 4);;
+					}
+					d_n = 6;
+					
+				}
+
+			}
+			if (idTimer == 0)
+			{
+				idTimer = setInterval('moveBall();', 50);
+			}
+			
+		}
+
+	function growradius()
+	{
+		r_n = 0.5;
+		if (idTimer == 0)
+		{
+			idTimer = setInterval('moveBall();', 50);	
+		}
+		
+	}
+	function stop()
+	{
+		clearInterval(idTimer);
+		idTimer = 0;
+		r_n = 0;
+		d_n = 0;
+		for (let i = 0; i < figures.length; i++)
+		{
+			figures[i].direct = 0; 
+		}
+	}
+	</script>
+	<style type="text/css">
+		canvas { border: 1px solid blue; }
+	</style>
+</head>
+<body onload="init();">
+	<canvas id="canvas" width="600" height="400" onclick="goInput(event);">
+	</canvas>
+	<form>
+		<input type = "button" value = "Вверх" onclick="move('up')">
+		<input type = "button" value = "Вниз" onclick="move('down')">
+		<input type = "button" value = "Влева" onclick="move('left')">
+		<input type = "button" value = "Вправо" onclick="move('right')">
+		<input type = "button" value = "Рандом" onclick="move('random')">
+		<input type = "button" value = "Хаос" onclick="move('chaos')">
+		<input type = "button" value = "Стоп" onclick="stop()">
+	    <input type = "button" value = "Увеличение радиуса" onclick="growradius()">
+	</form>
+</body>
+</html>
