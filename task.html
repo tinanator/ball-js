@@ -27,7 +27,14 @@
 				direct: 0,	
 				vX: 0,
 				vY: 0,
-				
+				shape: function()
+				{
+					return 'Figure';
+				},
+				isIntersec: function()
+				{
+					return false;
+				},
 				move: function(vX, vY){
 					this.posX += vX;
 					this.posY += vY;
@@ -44,7 +51,21 @@
 				isToDelete: function()
 				{
 					return false;
-				}
+				},
+				getxcenter: function(ctx)
+				{
+
+				},
+				getycenter: function(ctx)
+				{
+
+				},
+				getlen: function(ctx)
+				{
+					
+				},
+
+
 		});
 		TBall = new Class({
 			Extends: TFigure,
@@ -57,8 +78,51 @@
 			},
 			color:"rgb(0,0,0)",
 			rBall: 0,
+
+			isIntersec: function(item)
+			{
+				if (item.shape() == 'Ball')
+				{
+					if (
+						this.rBall + item.rBall >= Math.sqrt(
+						(this.posX - item.posX)*(this.posX - item.posX)+(this.posY - item.posY)*(this.posY - item.posY)
+						)
+						)
+					{
+						return true;
+					}
+				}
+				else if (item.shape() == 'Square')
+				{
+					let x_c = item.getxcenter();
+					let y_c = item.getycenter();
+					let len = item.getlen();
+					if (this.rBall + len >= Math.sqrt((this.posX - x_c)*(this.posX - x_c)+(this.posY - y_c)*(this.posY - y_c)))
+					{
+						return true;
+					}
+
+
+				}
+				else if (item.shape() == 'Triangle')
+				{
+					let x_c = item.getxcenter();
+					let y_c = item.getycenter();
+					let len = item.getlen();
+					if (this.rBall + len >= Math.sqrt((this.posX - x_c)*(this.posX - x_c)+(this.posY - y_c)*(this.posY - y_c)))
+					{
+						return true;
+					}
+				}
+				return false;
+
+			},
+			shape: function()
+			{
+				return 'Ball';
+			},
 			colorBall: function(ctx){
-				// формируем градиентную заливку для шарика
+				
 				with (this){
 					var gradient = ctx.createRadialGradient(posX+rBall/4,
 					posY-rBall/6, rBall/8, posX, posY, rBall);
@@ -80,7 +144,7 @@
 				return false;
 			},
 			draw : function(ctx){
-				// рисуем шарик на canvas
+				
 				with (this){
 					ctx.fillStyle = colorBall(ctx);
 					ctx.beginPath();
@@ -107,10 +171,71 @@
 			},
 			color:"rgb(0,0,0)",
 			size: 0,
+			shape: function()
+			{
+				return 'Square';
+			},
+			getxcenter: function()
+			{
+				return (this.posX + this.posX + this.size)/2;
+			},
+			getycenter: function()
+			{
+				return (this.posY + this.posY - this.size)/2;
+			},
+			getlen: function()
+			{
+				return Math.sqrt((this.getxcenter() - this.posX)*(this.getxcenter()  - this.posX)+(this.getycenter()  - this.posY)*(this.getycenter()  - this.posY));
+			},
+			isIntersec: function(item)
+			{
+
+				if (item.shape() == 'Square')
+				{
+					let x_c1 = this.getxcenter();
+					let y_c1 = this.getycenter();
+					let x_c2 = item.getxcenter();
+					let y_c2 = item.getycenter();
+					let len1 = this.getlen();
+					let len2 = item.getlen();
+					if (len1 + len2 >= Math.sqrt((x_c1 - x_c2)*(x_c1 - x_c2)+(y_c1 - y_c2)*(y_c1 - y_c2)))
+					{
+						return true;
+					}
+				}
+				else if (item.shape() == 'Ball')
+				{
+					let x_c = this.getxcenter();
+					let y_c = this.getycenter();
+					let len = this.getlen();
+					if (item.rBall + len >= Math.sqrt((item.posX - x_c)*(item.posX - x_c)+(item.posY - y_c)*(item.posY - y_c)))
+					{
+						return true;
+					}
+
+
+				}
+				else if (item.shape() == 'Triangle')
+				{
+					let x_c2 = item.getxcenter();
+					let y_c2 = item.getycenter();
+					let x_c1 = this.getxcenter();
+					let y_c1 = this.getxcenter(); 
+					let len1 = this.getlen();
+					let len2 = item.getlen();
+ 					if (len1 + len2 >= Math.sqrt((x_c1 - x_c2)*(x_c1 - x_c2)+(y_c1 - y_c2)*(y_c1 - y_c2)))
+					{
+						return true;
+					
+					}
+				}
+				return false;
+
 			
+		},
 			isToDelete: function()
 			{
-				if ((this.posX - this.size > canvas.width) || (this.posX < 0) || (this.posY < 0) || (this.posY - this.size > canvas.height)) 
+				if ((this.posX > canvas.width) || (this.posX  + this.size < 0) || (this.posY + this.size < 0) || (this.posY - this.size > canvas.height)) 
 				{
 					return true;	
 				}
@@ -150,7 +275,70 @@
 			},
 			color:"rgb(0,0,0)",
 			size: 0,
+			shape: function()
+			{
+				return 'Triangle';
+			},
+			getxcenter: function(ctx)
+			{
+				return (this.posX + this.posX + (this.size / 2) + this.posX + this.size) / 3;
+			},
+			getycenter: function(ctx)
+			{
+				return (this.posY + this.posY - (Math.sqrt((3*this.size*this.size)/4)) + this.posY) / 3;
+			},
+			getlen: function(ctx)
+			{
+				return Math.sqrt((this.getxcenter() - this.posX)*(this.getxcenter() - this.posX)+(this.getycenter() - this.posY)*(this.getycenter() - this.posY));
+			},
+			isIntersec: function(item)
+			{
+				if (item.shape() == 'Square')
+				{
+					let x_cS = item.getxcenter();
+					let y_cS = item.getycenter();
+					
+					let x_cT = this.getxcenter();
+					let y_cT = this.getycenter();
+					let lenS = item.getlen();
+					let lenT = this.getlen();
+					
+ 					if (lenS + lenT >= Math.sqrt((x_cS - x_cT)*(x_cS - x_cT)+(y_cS - y_cT)*(y_cS - y_cT)))
+					{
+						return true;
+					
+					}
+				}
+				else if (item.shape() == 'Ball')
+				{
+					let x_c = this.getxcenter();
+					let y_c = this.getycenter();
+					let len = this.getlen();
+					if (item.rBall + len >= Math.sqrt((item.posX - x_c)*(item.posX - x_c)+(item.posY - y_c)*(item.posY - y_c)))
+					{
+						return true;
+					}
 
+
+				}
+				else if (item.shape() == 'Triangle')
+				{
+					let x_c1 = this.getxcenter();
+					let y_c1 = this.getycenter();
+					let x_c2 = item.getxcenter();
+					let y_c2 = item.getycenter();
+					let len1 = this.getlen();
+					let len2 = item.getlen();
+ 					if (len1 + len2 >= Math.sqrt((x_c1 - x_c2)*(x_c1 - x_c2)+(y_c1 - y_c2)*(y_c1 - y_c2)))
+					{
+						return true;
+					
+					}
+				
+
+				}
+				return false;
+			},
 			isToDelete: function()
 			{
 				if (
@@ -285,14 +473,32 @@
  				
 				
 			}
+			var toDel = [];
 			for (let i = figures.length - 1; i >= 0; i--)
 			{
-				if (figures[i].isToDelete()) 
- 				{
- 					figures.splice(i, 1);
- 				}
+				for (let j = figures.length - 1; j >=0; j--)
+				{	
+					if (i != j)
+					{
+						var b = figures[i].isIntersec(figures[j]);
+						if (b)
+						{
+							toDel.push(i);
+							toDel.push(j);
+						}
+					}	
+				}
 			}
-
+			for (let i = figures.length - 1; i >= 0; i--)
+			{
+				if (figures[i].isToDelete() || toDel.indexOf(i) >= 0)
+				{
+ 					figures.splice(i, 1);
+ 					toDel.splice(i, 1);
+ 					
+				}
+			}
+			
 		}
 
 			
@@ -376,20 +582,7 @@
 			}
 			
 		}
-	function grow()
-	{
 
-		for (var i = figures.length; i < figures.length; i++)
-		{
-			figures[i].rBall += 0.5;
-			if (figures[i].rBall >= 100) 
-			{
-				figures.splice(i, 1);
-				directions.splice(i, 1);	
-			}
-			figures[i].draw(ctx);
-		}
-	}	
 	function growradius()
 	{
 		r_n = 0.5;
